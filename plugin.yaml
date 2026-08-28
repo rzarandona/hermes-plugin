@@ -1,0 +1,23 @@
+manifest_version: 2
+api_version: 1
+name: hermes-kanban-workflow
+version: 0.1.0
+kind: workflow
+entrypoint: __init__:register
+requires:
+  hermes_agent: "0.20.5"
+  hermes_desktop: "0.17.0"
+  source_commit: "a251e87d826f4ef7c75a8927d5304e24cf43ef54"
+  python: ">=3.11,<3.14"
+capabilities:
+  default: observe_only
+  persistence: guarded_service_only
+tools:
+  - kanban_status
+commands:
+  - kanban_preflight
+  - kanban_request_activation
+fail_closed:
+  incompatible_host: HOST_COMPATIBILITY_UNSUPPORTED
+  missing_owner_decision: ACTIVATION_ENTRY_DENIED
+

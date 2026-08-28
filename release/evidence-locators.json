@@ -1,0 +1,13 @@
+{
+  "status": "partial-development-evidence",
+  "rows": {
+    "workflow-contracts": "tests/integration/test_flows_and_controls.py",
+    "host-contract": "tests/contract/test_hermes_adapter.py",
+    "activation-and-audit": "tests/contract/test_activation_and_release.py",
+    "trusted-core": "tests/unit/test_trusted_core.py",
+    "operator-guide": "docs/operator-guide.md",
+    "known-limitations": "docs/known-limitations.md"
+  },
+  "unsupported_host_outcome": "ARTIFACT_LOCATOR_UNSUPPORTED"
+}
+

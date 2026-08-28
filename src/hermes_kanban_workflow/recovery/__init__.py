@@ -1,0 +1,2 @@
+"""Bounded automated recovery contracts."""
+

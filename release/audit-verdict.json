@@ -1,0 +1,10 @@
+{
+  "verdict": "NOT_REVIEWED",
+  "release_ready": false,
+  "reason": "Independent audit and clean-profile evidence have not been completed.",
+  "open_p0": null,
+  "open_p1": null,
+  "p2_disposition": null,
+  "gatekeeper_ack": false
+}
+

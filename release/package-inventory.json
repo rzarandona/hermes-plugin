@@ -1,0 +1,18 @@
+{
+  "status": "development-not-release-ready",
+  "package": "hermes-kanban-workflow",
+  "version": "0.1.0",
+  "manifest": "plugin.yaml",
+  "policy": "policies/pilot-policy.json",
+  "policy_signature_status": "unsigned-development-fixture",
+  "documents": [
+    "README.md",
+    "SECURITY.md",
+    "docs/operator-guide.md",
+    "docs/role-guide.md",
+    "docs/recovery-rollback-runbook.md",
+    "docs/known-limitations.md"
+  ],
+  "activation": "disabled"
+}
+

@@ -1,0 +1,2 @@
+"""Immutable workflow domain types."""
+

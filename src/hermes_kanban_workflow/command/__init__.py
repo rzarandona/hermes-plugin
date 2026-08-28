@@ -1,0 +1,2 @@
+"""Guarded named-command boundary."""
+

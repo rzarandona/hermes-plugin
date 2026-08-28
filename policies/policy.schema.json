@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["policy_id", "scope", "issued_at", "expires_at", "trust_epoch", "rules"],
+  "properties": {
+    "policy_id": {"type": "string", "minLength": 1},
+    "scope": {"type": "string", "minLength": 1},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "trust_epoch": {"type": "integer", "minimum": 1},
+    "rules": {"type": "object"}
+  },
+  "additionalProperties": false
+}
+

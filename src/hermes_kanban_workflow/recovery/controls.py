@@ -43,4 +43,3 @@ class HoldRegistry:
         record = self._holds[hold_id]
         allowed = set(eligible)
         return tuple(member for member in record.members if member in allowed)
-

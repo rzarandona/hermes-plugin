@@ -1,25 +1,68 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Literal
 
+from hermes_kanban_workflow.command.receipts import CommandReceipt
+from hermes_kanban_workflow.command.validator import (
+    AuthenticatedPrincipal,
+    CommandValidator,
+    ValidationSnapshot,
+)
+from hermes_kanban_workflow.command.windows_profile import WindowsProfileReceipt
 from hermes_kanban_workflow.domain.commands import CommandEnvelope
-from hermes_kanban_workflow.domain.events import WorkflowEvent
 from hermes_kanban_workflow.ledger.repository import Ledger
 
 
+@dataclass(frozen=True)
+class ServiceTopology:
+    mode: Literal["fixture-separate-process", "external-windows-service", "combined-observe-only"]
+    profile: WindowsProfileReceipt | None = None
+
+    @property
+    def enforcement_ready(self) -> bool:
+        return (
+            self.mode == "external-windows-service"
+            and self.profile is not None
+            and self.profile.enforcement_eligible
+        )
+
+
 class GuardedCommandService:
-    REQUIRED_IDENTITY = "HermesKanbanWriter"
+    """Command boundary intended to live only inside the writer service process."""
 
-    def __init__(self, ledger: Ledger, writer_identity: str) -> None:
+    def __init__(
+        self,
+        ledger: Ledger,
+        validator: CommandValidator,
+        snapshot_loader: Callable[[], ValidationSnapshot],
+        topology: ServiceTopology,
+    ) -> None:
+        if topology.mode == "external-windows-service" and not topology.enforcement_ready:
+            raise PermissionError("EXTERNAL_WINDOWS_PROFILE_EVIDENCE_REQUIRED")
         self._ledger = ledger
-        self._writer_identity = writer_identity
+        self._validator = validator
+        self._snapshot_loader = snapshot_loader
+        self._topology = topology
 
-    def execute(self, command: CommandEnvelope) -> WorkflowEvent:
-        if self._writer_identity != self.REQUIRED_IDENTITY or self._ledger.writer_identity != self.REQUIRED_IDENTITY:
-            raise PermissionError("SOLE_WRITER_DENIED")
-        if not command.is_current(datetime.now(timezone.utc)):
-            raise PermissionError("COMMAND_EXPIRED")
-        if command.authority_epoch.value < 1:
-            raise PermissionError("STALE_AUTHORITY_EPOCH")
+    @property
+    def enforcement_ready(self) -> bool:
+        return self._topology.enforcement_ready
+
+    def execute(
+        self,
+        command: CommandEnvelope,
+        principal: AuthenticatedPrincipal,
+        *,
+        effect: Callable[[CommandEnvelope], None] | None = None,
+    ) -> CommandReceipt:
+        validated = self._validator.validate(command, principal, self._snapshot_loader())
+        if effect is not None:
+            self._validator.recheck_before_effect(
+                validated,
+                principal,
+                self._snapshot_loader,
+                effect,
+            )
         return self._ledger.append(command)
-

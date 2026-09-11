@@ -12,6 +12,12 @@ dependencies = ["pydantic>=2,<3", "cryptography>=42", "typer>=0.12", "fastapi>=0
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "hypothesis>=6", "ruff>=0.6", "mypy>=1.11"]
 
+[project.scripts]
+hermes-kanban-workflow = "hermes_kanban_workflow.cli:main"
+
+[project.entry-points."hermes_agent.plugins"]
+hermes-kanban-workflow = "hermes_kanban_workflow.adapters.hermes_host:register"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/hermes_kanban_workflow"]
 
@@ -22,9 +28,17 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+exclude = ["__init__.py", "tests/**/__init__.py"]
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
-packages = ["hermes_kanban_workflow"]
+files = ["src/hermes_kanban_workflow"]
+explicit_package_bases = true
+mypy_path = "src"
+
+[dependency-groups]
+dev = [
+    "pyyaml>=6.0.3",
+]
 

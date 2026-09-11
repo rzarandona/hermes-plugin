@@ -1,13 +1,22 @@
 {
-  "status": "partial-development-evidence",
-  "rows": {
-    "workflow-contracts": "tests/integration/test_flows_and_controls.py",
-    "host-contract": "tests/contract/test_hermes_adapter.py",
-    "activation-and-audit": "tests/contract/test_activation_and_release.py",
-    "trusted-core": "tests/unit/test_trusted_core.py",
-    "operator-guide": "docs/operator-guide.md",
-    "known-limitations": "docs/known-limitations.md"
-  },
-  "unsupported_host_outcome": "ARTIFACT_LOCATOR_UNSUPPORTED"
+  "schema_version": 1,
+  "owner": "Evidence Custodian",
+  "overall_status": "BLOCKED",
+  "locator_rule": "Repository locators are immutable only when bound by the final bundle checksums; external/manual authority is never inferred.",
+  "completion_matrix": [
+    {"row": 1, "area": "Specification traceability", "status": "BLOCKED", "locator": "docs/conformance-matrix.md", "reason": "all-section repository mapping generated; independent specification review and immutable external acceptance remain absent"},
+    {"row": 2, "area": "Workflow correctness", "status": "BLOCKED", "locator": "tests/fixtures/conformance_cases.json", "reason": "two independent workflow reviews and Gatekeeper verdict absent"},
+    {"row": 3, "area": "Sole-writer protection", "status": "BLOCKED", "locator": "WP5_EXTERNAL_CLEAN_HOST_EVIDENCE_REQUIRED", "fallback": "EXTERNAL_WINDOWS_PROFILE_EVIDENCE_REQUIRED"},
+    {"row": 4, "area": "Permission and capability boundaries", "status": "BLOCKED", "locator": "tests/integration/security/test_security_case.py", "reason": "independent security/role review absent"},
+    {"row": 5, "area": "Identity replay and resource safety", "status": "BLOCKED", "locator": "tests/failure_injection/test_resource_scheduler.py", "reason": "independent reliability review absent"},
+    {"row": 6, "area": "External-effect reconciliation", "status": "BLOCKED", "locator": "tests/failure_injection/test_spec_conformance.py", "reason": "fixtures only; effects/integration review absent"},
+    {"row": 7, "area": "Recovery rollback holds and failover", "status": "BLOCKED", "locator": "tests/failure_injection/test_holds_failover.py", "reason": "Recovery reviewer/Gatekeeper acceptance absent"},
+    {"row": 8, "area": "Review QA and evidence integrity", "status": "BLOCKED", "locator": "tests/integration/flow2/review/test_review.py", "reason": "actual independent sealed reviews absent"},
+    {"row": 9, "area": "Secrets artifacts and retention", "status": "BLOCKED", "locator": "tests/integration/test_secret_boundary.py", "reason": "production broker/custodian evidence absent"},
+    {"row": 10, "area": "Owner reporting and artifact locators", "status": "BLOCKED", "locator": "tests/integration/test_owner_reporting.py", "fallback": "ARTIFACT_LOCATOR_UNSUPPORTED", "reason": "Owner acceptance absent"},
+    {"row": 11, "area": "Accessibility and responsive surfaces", "status": "BLOCKED", "locator": "docs/wp12-manual-accessibility.md", "fallback": "MANUAL_AT_EVIDENCE_REQUIRED"},
+    {"row": 12, "area": "Reliability and performance", "status": "BLOCKED", "locator": "tests/contract/test_reliability_threshold_policy.py", "reason": "signed external reviewer threshold evidence absent"},
+    {"row": 13, "area": "Packaging and host compatibility", "status": "BLOCKED", "locator": "tests/contract/test_package_install.py", "reason": "isolated wheel/bundle, verified upgrade, authenticated readiness seam, and durable stage contracts are repository evidence only; clean-host service proof plus packaging/Hermes/activation independent reviews remain absent"},
+    {"row": 14, "area": "Documentation and release readiness", "status": "BLOCKED", "locator": "release/audit-verdict.json", "reason": "independent audit and Owner completion acceptance unexecuted"}
+  ]
 }
-

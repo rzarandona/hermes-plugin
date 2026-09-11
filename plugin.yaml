@@ -2,22 +2,41 @@ manifest_version: 2
 api_version: 1
 name: hermes-kanban-workflow
 version: 0.1.0
-kind: workflow
-entrypoint: __init__:register
-requires:
-  hermes_agent: "0.20.5"
-  hermes_desktop: "0.17.0"
+description: Fail-closed standalone workflow controls for Hermes Kanban.
+kind: standalone
+provides_tools:
+  - kanban_status
+capabilities: []
+python_dependencies:
+  - "pydantic>=2,<3"
+  - "cryptography>=42"
+  - "typer>=0.12"
+  - "fastapi>=0.110"
+config_schema:
+  activation_mode:
+    type: string
+    default: observe_only
+    description: Enforcement activation is unavailable without verified policy and Owner gates.
+tags:
+  - kanban
+  - workflow
+  - fail-closed
+hermes:
+  agent_version: "0.20.5"
+  desktop_version: "0.17.0"
   source_commit: "a251e87d826f4ef7c75a8927d5304e24cf43ef54"
   python: ">=3.11,<3.14"
-capabilities:
-  default: observe_only
+  python_entrypoint: "__init__:register"
   persistence: guarded_service_only
-tools:
-  - kanban_status
-commands:
-  - kanban_preflight
-  - kanban_request_activation
-fail_closed:
-  incompatible_host: HOST_COMPATIBILITY_UNSUPPORTED
-  missing_owner_decision: ACTIVATION_ENTRY_DENIED
-
+  default_mode: observe_only
+  agent_enabled_by_default: false
+  desktop_enabled_by_default: false
+  lifecycle_apis:
+    - load_package
+    - register_observe_only
+    - run_preflight
+    - activate_enforcement
+  activation_chain: signed_monotonic_ten_stage
+  fail_closed:
+    incompatible_host: HOST_COMPATIBILITY_UNSUPPORTED
+    missing_owner_decision: ACTIVATION_ENTRY_DENIED

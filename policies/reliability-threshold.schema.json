@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hermes.local/schemas/reliability-threshold.schema.json",
+  "title": "Hermes Kanban reliability threshold policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "policy_version",
+    "issued_at",
+    "effective_at",
+    "expires_at",
+    "signer_key_id",
+    "supported_host",
+    "workload_profile",
+    "concurrency",
+    "queue_depth",
+    "resource_class",
+    "warm_cold_state",
+    "measurement_window_seconds",
+    "percentile",
+    "maximum_error_rate",
+    "retention_window_days",
+    "evaluator_compatibility_version",
+    "aggregation",
+    "scenario_fixtures",
+    "signature"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "policy_id": {"type": "string", "minLength": 1},
+    "policy_version": {"type": "integer", "minimum": 1},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "effective_at": {"type": "string", "format": "date-time"},
+    "expires_at": {"type": "string", "format": "date-time"},
+    "signer_key_id": {"type": "string", "minLength": 1},
+    "supported_host": {"type": "string", "minLength": 1},
+    "workload_profile": {"type": "string", "minLength": 1},
+    "concurrency": {"type": "integer", "minimum": 1},
+    "queue_depth": {"type": "integer", "minimum": 0},
+    "resource_class": {"type": "string", "minLength": 1},
+    "warm_cold_state": {"enum": ["warm", "cold"]},
+    "measurement_window_seconds": {"type": "integer", "minimum": 1},
+    "percentile": {"type": "number", "exclusiveMinimum": 0, "maximum": 100},
+    "maximum_error_rate": {"type": "number", "minimum": 0, "maximum": 1},
+    "retention_window_days": {"type": "integer", "minimum": 1},
+    "evaluator_compatibility_version": {"type": "string", "minLength": 1},
+    "aggregation": {"type": "string", "minLength": 1},
+    "scenario_fixtures": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "seed", "clock", "workload", "aggregation", "retention_days", "raw_evidence", "proof_scope"],
+        "properties": {
+          "name": {"type": "string", "minLength": 1},
+          "seed": {"type": "integer"},
+          "clock": {"type": "string", "format": "date-time"},
+          "workload": {"type": "string", "minLength": 1},
+          "aggregation": {"type": "string", "minLength": 1},
+          "retention_days": {"type": "integer", "minimum": 1},
+          "raw_evidence": {"type": "string", "minLength": 1},
+          "proof_scope": {"const": "repository-fixture-only"}
+        }
+      }
+    },
+    "signature": {"type": "string", "minLength": 1}
+  }
+}

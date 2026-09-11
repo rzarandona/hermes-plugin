@@ -5,14 +5,33 @@ from __future__ import annotations
 from typing import Any
 
 
+def register(ctx: Any) -> None:
+    """Pinned generation-1 entry point; registers inert host surfaces only."""
+    HermesPluginContextPort(ctx).register_package_commands()
+
+
 class HermesPluginContextPort:
     def __init__(self, ctx: Any) -> None:
         self._ctx = ctx
 
     def register_package_commands(self) -> None:
-        self._ctx.register_tool("kanban_status", self.status)
-        self._ctx.register_command("kanban_preflight", self.preflight)
-        self._ctx.register_command("kanban_request_activation", self.request_activation)
+        self._ctx.register_tool(
+            name="kanban_status",
+            toolset="kanban-workflow",
+            schema={"type": "object", "properties": {}, "additionalProperties": False},
+            handler=self.status,
+            description="Read workflow plugin status without durable mutation.",
+        )
+        self._ctx.register_command(
+            name="kanban_preflight",
+            handler=self.preflight,
+            description="Describe the explicit offline preflight inputs.",
+        )
+        self._ctx.register_command(
+            name="kanban_request_activation",
+            handler=self.request_activation,
+            description="Describe the owner decision required for activation.",
+        )
 
     @staticmethod
     def status() -> dict[str, str]:
@@ -25,4 +44,3 @@ class HermesPluginContextPort:
     @staticmethod
     def request_activation() -> dict[str, str]:
         return {"status": "owner-decision-required"}
-

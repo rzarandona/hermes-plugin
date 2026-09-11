@@ -1,0 +1,8 @@
+{
+  "hermes_agent_version": "0.20.5",
+  "source_commit": "a251e87d826f4ef7c75a8927d5304e24cf43ef54",
+  "source_module": "hermes_cli/plugins.py",
+  "constant": "_KNOWN_MANIFEST_FIELDS",
+  "sha256_provenance": "pinned-vocabulary-copied-for-clean-host-contract-testing",
+  "known_manifest_fields": ["api_version", "author", "capabilities", "config_schema", "depends", "description", "emits", "external_dependencies", "hermes", "homepage", "hooks", "kind", "label", "license", "listens", "manifest_version", "name", "optional_env", "pip_dependencies", "platforms", "provides_browser_providers", "provides_hooks", "provides_tools", "provides_web_providers", "python_dependencies", "requires_env", "requires_plugins", "tags", "version"]
+}

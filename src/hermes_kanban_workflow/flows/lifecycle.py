@@ -26,4 +26,3 @@ class LifecycleEngine:
         if target.value != current.flow.value + 1 or not evidence:
             raise ValueError("FLOW_TRANSITION_DENIED")
         return LifecycleRecord(current.work_id, target, current.evidence + (evidence,))
-

@@ -1,10 +1,19 @@
 {
-  "verdict": "NOT_REVIEWED",
+  "schema_version": 1,
+  "owner": "Gatekeeper",
+  "status": "UNEXECUTED",
   "release_ready": false,
-  "reason": "Independent audit and clean-profile evidence have not been completed.",
-  "open_p0": null,
-  "open_p1": null,
-  "p2_disposition": null,
-  "gatekeeper_ack": false
+  "reason_code": "AUTHENTICATED_INDEPENDENT_AUDIT_REQUIRED",
+  "reason": "No cryptographically authenticated eligible independent reviewer verdict or Gatekeeper acknowledgement was provided.",
+  "required": {
+    "immutable_scope_digest": null,
+    "immutable_evidence_digest": null,
+    "verdict": "PASS",
+    "open_p0": 0,
+    "open_p1": 0,
+    "p2_disposition": "required",
+    "expiry": "required",
+    "gatekeeper_acknowledgement": "required"
+  },
+  "warning": "Caller-created JSON and booleans are metadata and cannot satisfy release_gate.verify_audit_intake."
 }
-

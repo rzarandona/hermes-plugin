@@ -1,18 +1,588 @@
 {
-  "status": "development-not-release-ready",
-  "package": "hermes-kanban-workflow",
-  "version": "0.1.0",
-  "manifest": "plugin.yaml",
-  "policy": "policies/pilot-policy.json",
-  "policy_signature_status": "unsigned-development-fixture",
-  "documents": [
-    "README.md",
-    "SECURITY.md",
-    "docs/operator-guide.md",
-    "docs/role-guide.md",
-    "docs/recovery-rollback-runbook.md",
-    "docs/known-limitations.md"
+  "activation_authorized": false,
+  "entries": [
+    {
+      "bytes": 2094,
+      "category": "document",
+      "path": "README.md",
+      "sha256": "4832ad2013a19092fb90310ce6fdff9b38c5d167d078a545b3ac82c2fe2cbc87"
+    },
+    {
+      "bytes": 1793,
+      "category": "document",
+      "path": "SECURITY.md",
+      "sha256": "5c4e270d7997013649e1b0e26b05407da2ecee433378901091e0c74d7cf56464"
+    },
+    {
+      "bytes": 283,
+      "category": "plugin-source",
+      "path": "__init__.py",
+      "sha256": "b1abc56b69c7b62cb59cd2787f95b5b54c7a12654adc01b14274f461985aee81"
+    },
+    {
+      "bytes": 171,
+      "category": "manifest",
+      "path": "dashboard/manifest.json",
+      "sha256": "f57d89b78997f08e51775be5f73156e6ded2e48b73004a6777d695ffb0bce7ae"
+    },
+    {
+      "bytes": 503,
+      "category": "plugin-source",
+      "path": "dashboard/plugin_api.py",
+      "sha256": "1349800eaf11329007dd27060bc25400908426bfdd1c4ea9b1226534d2868886"
+    },
+    {
+      "bytes": 450,
+      "category": "plugin-source",
+      "path": "desktop/plugin.js",
+      "sha256": "62f40ba7b043f35f260adff1fc2e1e77cbff92c99b1af31740c45910bc77ea13"
+    },
+    {
+      "bytes": 195139,
+      "category": "plugin-bundle",
+      "path": "dist/hermes-kanban-workflow-plugin.zip",
+      "sha256": "0199cdea729839ea6fe0e8317ef30b407e624be6039092fc70d94e967f13b77b"
+    },
+    {
+      "bytes": 104622,
+      "category": "wheel",
+      "path": "dist/hermes_kanban_workflow-0.1.0-py3-none-any.whl",
+      "sha256": "7809653099b1c1938a6f89186a885f7db311136fea14cf8a5129a285150a7bc8"
+    },
+    {
+      "bytes": 148317,
+      "category": "document",
+      "path": "docs/conformance-matrix.md",
+      "sha256": "f8b923fb42fd8bfbefc71f0bd966168af22257830adb717c22a3714503f3aa23"
+    },
+    {
+      "bytes": 90933,
+      "category": "document",
+      "path": "docs/implementation-ledger.md",
+      "sha256": "b07eb75e5aeb2f4ece64580193d52d75b4e68080adb62d7e081bbf1220ecc187"
+    },
+    {
+      "bytes": 2565,
+      "category": "document",
+      "path": "docs/known-limitations.md",
+      "sha256": "cfb98ccfbfef8ffcbbca0aea2fa42318f273501d32b23d907d87f7000692bf02"
+    },
+    {
+      "bytes": 2458,
+      "category": "document",
+      "path": "docs/operator-guide.md",
+      "sha256": "b4d32b873914a5e967460fb0c73e7519f0b6fba44a9e1c08c3785cb619b1fda8"
+    },
+    {
+      "bytes": 2851,
+      "category": "document",
+      "path": "docs/recovery-rollback-runbook.md",
+      "sha256": "d277c20f7d2d02036bedab355ba5a717157692a56ae1bccfc0210ff23c01f0e1"
+    },
+    {
+      "bytes": 2673,
+      "category": "document",
+      "path": "docs/role-guide.md",
+      "sha256": "2f38d90261bb72e8777a9abbadd044b0a05314e2ee30ee34536354f9ea8239c8"
+    },
+    {
+      "bytes": 6971,
+      "category": "document",
+      "path": "docs/security-boundary.md",
+      "sha256": "7839ed74f4d0308618e70e45962a6eb9c5421f81df47a56bbab2e53e8fea2eb5"
+    },
+    {
+      "bytes": 2039,
+      "category": "document",
+      "path": "docs/wp12-manual-accessibility.md",
+      "sha256": "08e624340be0d8a393dc7790f402e60810405bfd6b1987666b9cd0563c34ab7e"
+    },
+    {
+      "bytes": 1146,
+      "category": "manifest",
+      "path": "plugin.yaml",
+      "sha256": "78e232386a848bd19e15cab7b44c94fcf852d49b38449dd939be6a860464ee22"
+    },
+    {
+      "bytes": 230,
+      "category": "policy",
+      "path": "policies/pilot-policy.json",
+      "sha256": "36cf0b9b910ef6e8d6e4f809e9c03b763e61405438f4229178028763f34b8dfb"
+    },
+    {
+      "bytes": 46,
+      "category": "signature",
+      "path": "policies/pilot-policy.sig",
+      "sha256": "1ed3db42f0a62c01ee6fba7c92e6d3142e254402dcfcfb927f3bb6a05de01a48"
+    },
+    {
+      "bytes": 1474,
+      "category": "schema",
+      "path": "policies/policy.schema.json",
+      "sha256": "e881d17e8a824db8a7732b123cc0cd58421f6c4e2b3a1952866b756ca767e74e"
+    },
+    {
+      "bytes": 2762,
+      "category": "schema",
+      "path": "policies/reliability-threshold.schema.json",
+      "sha256": "80f391fba270df83eed3c2ebf49c75fdd866d9e205df1153d85876cc7401aed6"
+    },
+    {
+      "bytes": 671,
+      "category": "plugin-source",
+      "path": "release/audit-verdict.json",
+      "sha256": "e6ef1d3e81bc336b7cd091473f062c99567e1b63d0a14fabb910df1691dfea9c"
+    },
+    {
+      "bytes": 3277,
+      "category": "test-evidence-index",
+      "path": "release/evidence-locators.json",
+      "sha256": "019b2416eeff75fa5724fd57325e2a9050c9ce2bed7aa72dbe0a6ccc91fa5473"
+    },
+    {
+      "bytes": 1833,
+      "category": "plugin-source",
+      "path": "release/owner-brief.md",
+      "sha256": "402a57c198a12dcfb02d7a13cfba5dbb97c6680b9495c2721458304d08ac6964"
+    },
+    {
+      "bytes": 1240,
+      "category": "skill",
+      "path": "skills/hermes-kanban-workflow/SKILL.md",
+      "sha256": "71d3c4ff36f3584c0eb11ca18966bbbdc8359ad38fcd80de8a4d97722faea102"
+    },
+    {
+      "bytes": 59,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/__init__.py",
+      "sha256": "0317e6a5754900bc8a2900f3cea7e986a8b69b5142a24f9c4eb798bdd331e09d"
+    },
+    {
+      "bytes": 20371,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/activation.py",
+      "sha256": "e9e3ecfaf05647512175699bf7e43c4010a251bf87d43b657282334d53b5e95b"
+    },
+    {
+      "bytes": 41,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/adapters/__init__.py",
+      "sha256": "72fd2aba50b05b24ac86022b15a08d779652acb81e46fe64b914e2f2adbc7511"
+    },
+    {
+      "bytes": 7681,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/adapters/artifact_store.py",
+      "sha256": "bbc0ab447c3e8385bfeb9b0db392ab0c28d63c051b3dc40fbded95b40ad23ab9"
+    },
+    {
+      "bytes": 1982,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/adapters/effects.py",
+      "sha256": "fcdb576d5b935bd725178e2c4f3b6899c6dca1ac7ceae18aff2a05058cdfe415"
+    },
+    {
+      "bytes": 1530,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/adapters/hermes_host.py",
+      "sha256": "e5d68342c55c6f8aed482674066ad05cb2081eeab995f2d636038fe3cfaa10e4"
+    },
+    {
+      "bytes": 4025,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/adapters/secret_broker.py",
+      "sha256": "751a82cbe6badd1119288cdee1931095dfc75f03fabcd76aef0926d714c262cc"
+    },
+    {
+      "bytes": 1360,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/cli.py",
+      "sha256": "0629b69be5af1339993e978697765cc4101a035c4aa96f6fa72fc7b92d8f57b8"
+    },
+    {
+      "bytes": 39,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/command/__init__.py",
+      "sha256": "c8b71eb392facfa446a3737bbbc7e16c5f3bf593d0dad0564aa1c691a1b155d4"
+    },
+    {
+      "bytes": 7081,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/command/ipc.py",
+      "sha256": "160fb9cd62c51ffca8d8d6569334fd92351e80f53398118bf0f2be48aacf0f5d"
+    },
+    {
+      "bytes": 1366,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/command/receipts.py",
+      "sha256": "f518b7e64657cf3353b9dd779c78685eb269e8c2095dad40a47a23aeefc9d3d0"
+    },
+    {
+      "bytes": 1288,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/command/registry.py",
+      "sha256": "1d4963f9fa1183b27fcfa2e18098e411bd1fbbfd38f69d55a26a884d9a4f34ac"
+    },
+    {
+      "bytes": 2262,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/command/service.py",
+      "sha256": "09e20ebbab866099c0d0c2367629ad0a18b183da1418b747730f202c8263b1bc"
+    },
+    {
+      "bytes": 5048,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/command/validator.py",
+      "sha256": "04c34a5ebfa0423ca4fabc7bb8fee2680ec066f81ef3623fb85016a91ea4a531"
+    },
+    {
+      "bytes": 6762,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/command/windows_profile.py",
+      "sha256": "b9f6bd78ff27e7c8e4564cdb92ab8295b1fff6f77e83be333f3f895941fbca92"
+    },
+    {
+      "bytes": 5952,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/config.py",
+      "sha256": "9f86ef9b94200e1a5740426660771b285ec5d1e3467486e076c6d7daa2d94fe1"
+    },
+    {
+      "bytes": 40,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/domain/__init__.py",
+      "sha256": "8420022486d3efe1285b6f3de0b652853c277d6482d5258a3955bc5f3ccfcd28"
+    },
+    {
+      "bytes": 3985,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/domain/commands.py",
+      "sha256": "3149759dbfc5a30080cd064d832378bb28eeb9f4d0fec5ffe717905b6ad2bd45"
+    },
+    {
+      "bytes": 794,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/domain/events.py",
+      "sha256": "97ecc60fda9344463c3925db39b5dbba32b46597c0c2fc61fe4f0f992e5b5b79"
+    },
+    {
+      "bytes": 1395,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/domain/identity.py",
+      "sha256": "84793fb43ae8c589da3ed048b447ea4147a636162bbcf5a9b7fcc8407add6837"
+    },
+    {
+      "bytes": 13320,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/domain/incidents.py",
+      "sha256": "bbd98b03191e9ac2e6a63b1a281a0cffa2f41438e812e296ec52eda82ae1c3c1"
+    },
+    {
+      "bytes": 1552,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/domain/resources.py",
+      "sha256": "7fbe1f7a6cdacdf2a5167e2b76ea345c8286c877fd1d02453fdffb6936c007cf"
+    },
+    {
+      "bytes": 50,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/effects/__init__.py",
+      "sha256": "4a99bfacc60fb62bdb1b4f60d27959192e58a1a11a88e85ce036f16b1afe209d"
+    },
+    {
+      "bytes": 1856,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/effects/receipts.py",
+      "sha256": "752ca3b8f0bc23bc7f4227d2b1f2aa8e0feade7a613105030a893247ce1a5571"
+    },
+    {
+      "bytes": 3607,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/effects/reconciler.py",
+      "sha256": "d62a766f2440bf5396054dac77e70b21ae9cc94b7f9db0b7e8d4226b7fcbc659"
+    },
+    {
+      "bytes": 14854,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/effects/state_machine.py",
+      "sha256": "0057c3c793c90b247969d17769e0e30b4232127b270c9e4c63675f792a3b8cd8"
+    },
+    {
+      "bytes": 476,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/evaluation/attribution.py",
+      "sha256": "9de90e71b868cc6675d7d32a292b910acaac5d8dff379e25d708daf09ad9816f"
+    },
+    {
+      "bytes": 7931,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/evaluation/metrics.py",
+      "sha256": "908c70a653eb9430b4a3b0ab0cb1cb4d9f04ac0a94532f9ec26639c11ff9b0f0"
+    },
+    {
+      "bytes": 2373,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/evaluation/trends.py",
+      "sha256": "09ca517dc89c4c38d8cbeb48f8718474b50aa7c6192a77cf5f62eea8cb2cb09d"
+    },
+    {
+      "bytes": 42,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/flows/__init__.py",
+      "sha256": "1310242b5badd6aa2eec97fb7245d49b9186d9dd633e2b6ccb73575ac4964e5a"
+    },
+    {
+      "bytes": 5800,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/flows/flow1.py",
+      "sha256": "c9013f0120fdc2d52def2936befbcb38d83414fcdd2214df2d7e95192e5b8c1d"
+    },
+    {
+      "bytes": 5005,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/flows/flow2.py",
+      "sha256": "7d7184a53807532ca0351c31f4b378d9ae11556082efd66303a9fa03cbfbb512"
+    },
+    {
+      "bytes": 22191,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/flows/flow3.py",
+      "sha256": "52d210a07a2ad12063e5483aeaa8ae7b2e09cdc9eed0b5fd5e71658e569ec170"
+    },
+    {
+      "bytes": 32019,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/flows/flow4.py",
+      "sha256": "785d43fa9710a5c4fd17d4210b2c9fad4212786c4b5125b4afb46b91b443adf3"
+    },
+    {
+      "bytes": 744,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/flows/lifecycle.py",
+      "sha256": "ba1d0e7326b03d90482a949a52ced2e7348719c1fb60a97cd944500eb6b71d30"
+    },
+    {
+      "bytes": 33766,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/flows/security_overlay.py",
+      "sha256": "05d87d43057e9a97c6f0a76ea8975f0a20b1f1e7b3a8e84d02067f934d506152"
+    },
+    {
+      "bytes": 33,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/ledger/__init__.py",
+      "sha256": "027f584b174253f002a15f56e6ea6819796da51a7248a89d6a4d46cbf260880b"
+    },
+    {
+      "bytes": 4117,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/ledger/projector.py",
+      "sha256": "fe6ec9567d0a19923a2f4939d04f4a1f32f5c11a478209bbcf8b45ae55c161c4"
+    },
+    {
+      "bytes": 5743,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/ledger/repository.py",
+      "sha256": "0a1025da47a65de9ca9e99635f2f0a2306621f3a914c198f9e93be88df265356"
+    },
+    {
+      "bytes": 3096,
+      "category": "migration",
+      "path": "src/hermes_kanban_workflow/ledger/schema.py",
+      "sha256": "121ca4c2021e1cf157343d9a2a75852461973f176697b0f76d119c3d9251e7cb"
+    },
+    {
+      "bytes": 7144,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/plugin.py",
+      "sha256": "14fceec3412c438aa101c5778de650f0104e316b6dded8c52797b14ebc4df8ea"
+    },
+    {
+      "bytes": 46,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/policy/__init__.py",
+      "sha256": "e0ae681ae4039209fd885e49656b7fb7a75a8d5babacaa0585b85596de4d0cfd"
+    },
+    {
+      "bytes": 1269,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/policy/compatibility.py",
+      "sha256": "d7e4ed3247e23c1434e5272056fdb17c6d383cde2f00b77238399759995c2f3d"
+    },
+    {
+      "bytes": 2742,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/policy/loader.py",
+      "sha256": "1a3e52c9f9094f2aef87ff4d1508d1b38d609dfdad0ee3ec3deb8ca661b8f953"
+    },
+    {
+      "bytes": 1858,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/policy/model.py",
+      "sha256": "2ccc388c71265aed8352515e0e5cf56894230d3cac43a529b6f6206dc71ceb58"
+    },
+    {
+      "bytes": 7458,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/policy/verifier.py",
+      "sha256": "406c9056a0a7cddb0b6f7c9881c50fd9ea8092892ab7906d006b9172da3e44ab"
+    },
+    {
+      "bytes": 0,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/py.typed",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 45,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/recovery/__init__.py",
+      "sha256": "2296751fa9238462e0e99bbfe9c3cbc0713d1314fdf42b382752f8c550648de1"
+    },
+    {
+      "bytes": 895,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/recovery/budget.py",
+      "sha256": "dfb75fd4b7d3c6877aefac98ea11cedd0968ee6b4b7a5742c3d6204f03e2aa87"
+    },
+    {
+      "bytes": 763,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/recovery/classes.py",
+      "sha256": "fc0deaf17674b22e6a9862fd872498d381224e5b9f9d5da375d612cbdd69da90"
+    },
+    {
+      "bytes": 1230,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/recovery/controls.py",
+      "sha256": "0d47abb46e533f4e20d9c47d3d1c3b3f7a2326907cdd72d0819022e7ccc9366f"
+    },
+    {
+      "bytes": 4679,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/recovery/executor.py",
+      "sha256": "99884c60ef615bc3054d1e4bbed24a1760ab864decc119977248f81ef95faf01"
+    },
+    {
+      "bytes": 10899,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/recovery/supervisor.py",
+      "sha256": "08fd4b0791bdcb2bccfed90d6a217b0c7b28c79ce7267b33c1905b9662991b0f"
+    },
+    {
+      "bytes": 1805,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/release_gate.py",
+      "sha256": "36beda5979d52d0c090f64c5d15b06f7f1365550bc65fd4954870770497da44a"
+    },
+    {
+      "bytes": 54,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/reporting/__init__.py",
+      "sha256": "227b89341e5168abf329148ab866081b8604fefdefcf8d066dc33369af179214"
+    },
+    {
+      "bytes": 2941,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/reporting/artifact_locator.py",
+      "sha256": "609e5182777f3d3ae7c127f4a13fa3216809de862b9185dda342a93b776eb167"
+    },
+    {
+      "bytes": 4098,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/reporting/owner_brief.py",
+      "sha256": "02771cb60d0c2a020a398656456a516cab69fea1327a3a369fcc81fa3ef6cc29"
+    },
+    {
+      "bytes": 6160,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/reporting/technical_packet.py",
+      "sha256": "b5fe1f974e9d775c2a1a0dccb275578c7c8de1e1426d397b5a6b046e548f98b9"
+    },
+    {
+      "bytes": 73,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/review/__init__.py",
+      "sha256": "bb26cfad8487508050eec87b08029ff90313c932404b561bb27b8f8280ca56d6"
+    },
+    {
+      "bytes": 8711,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/review/classifier.py",
+      "sha256": "5e3eba0629384f97d06f1debf8c95fa697f3b361b77dbfa36ddebdf14d02809b"
+    },
+    {
+      "bytes": 3584,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/review/gatekeeper.py",
+      "sha256": "29c51d2913c218bf18da0e21df455bcfec83d16bc1305140c5ed9146f7947d64"
+    },
+    {
+      "bytes": 1113,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/review/qa.py",
+      "sha256": "4b91d1b4dfb52705ef7f399016b3a31a678e5081d856473dda5c19bfc678ee8d"
+    },
+    {
+      "bytes": 15028,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/review/verdicts.py",
+      "sha256": "13b271da0b50e9a7cbd3f5164e8c669c4037a42ca570a411be87f8d8d20f93a4"
+    },
+    {
+      "bytes": 46,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/scheduler/__init__.py",
+      "sha256": "03b7e41efe9abb7de31ff4fc9ef81c8447a16427427a6ee630028a419d3d4bc8"
+    },
+    {
+      "bytes": 12973,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/scheduler/leases.py",
+      "sha256": "a71e7f7aaaaa6a18796b0bc9bf992741a79ac41dc6dccdc691c66d29a3168bcc"
+    },
+    {
+      "bytes": 1955,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/scheduler/precedence.py",
+      "sha256": "7dc0d4208ebbc14563355a34e9e3e570a1e2500a63dc0e7f4894c3860b35bf9e"
+    },
+    {
+      "bytes": 7422,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/scheduler/queues.py",
+      "sha256": "255ded925aa959f993af807e85b02663d8292a2e429e81115ed9281cc63cf8c3"
+    },
+    {
+      "bytes": 8359,
+      "category": "plugin-source",
+      "path": "src/hermes_kanban_workflow/scheduler/wakeup.py",
+      "sha256": "b06f266f7d26eee186e591769c5cac585dfc650efabbb875982fb46b9149aa4e"
+    },
+    {
+      "bytes": 9436,
+      "category": "test-evidence-index",
+      "path": "tests/fixtures/conformance_cases.json",
+      "sha256": "0b7cc954e8a2f4c90558141483dee0d041a3cbc54d5b50c7a843bd3d462d3d16"
+    },
+    {
+      "bytes": 242960,
+      "category": "test-evidence-index",
+      "path": "tests/fixtures/normative_traceability.json",
+      "sha256": "f6faab8e660e330c0a7ebe276a36f84e70eec421f925fd526a2f7202b829bf12"
+    },
+    {
+      "bytes": 733,
+      "category": "plugin-source",
+      "path": "vendor/hermes-agent-0.20.5-manifest-v2.json",
+      "sha256": "2323a636ad4705814ed4a1e8d399da50601057bbddd92597e38524adbe1aedd8"
+    }
   ],
-  "activation": "disabled"
+  "installation_authorized": false,
+  "owner": "Build",
+  "package": "hermes-kanban-workflow",
+  "reproducible_timestamp": "2026-08-29T00:00:00Z",
+  "schema_version": 1,
+  "status": "DEVELOPMENT_NOT_RELEASE_READY",
+  "version": "0.1.0"
 }
-

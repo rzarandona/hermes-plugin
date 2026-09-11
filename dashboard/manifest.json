@@ -1,8 +1,7 @@
 {
   "name": "hermes-kanban-workflow",
   "version": "0.1.0",
-  "backend": "plugin_api.py",
+  "api": "plugin_api.py",
   "apiPrefix": "/api/plugins/hermes-kanban-workflow/",
   "enabledByDefault": false
 }
-

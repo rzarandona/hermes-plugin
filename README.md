@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="https://static.aihub.cn/wp-content/uploads/2026/04/hermes-agent-logo.png" alt="Hermes Agent logo" width="160" />
+	<img src="docs/assets/hermes-agent-logo.png" alt="Hermes Agent logo" width="160" />
 </p>
 
 <h1 align="center">Hermes Kanban Workflow Plugin</h1>

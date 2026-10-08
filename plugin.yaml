@@ -7,11 +7,7 @@ kind: standalone
 provides_tools:
   - kanban_status
 capabilities: []
-python_dependencies:
-  - "pydantic>=2,<3"
-  - "cryptography>=42"
-  - "typer>=0.12"
-  - "fastapi>=0.110"
+python_dependencies: []
 config_schema:
   activation_mode:
     type: string
@@ -31,6 +27,8 @@ hermes:
   default_mode: observe_only
   agent_enabled_by_default: false
   desktop_enabled_by_default: false
+  observation_agent_version: "0.21.5"
+  observation_source_commit: "08165d58931841cee713468ae89032af7c57060a"
   lifecycle_apis:
     - load_package
     - register_observe_only

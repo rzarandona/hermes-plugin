@@ -39,9 +39,44 @@ def test_schema_migration_is_versioned_and_recorded(tmp_path: Path) -> None:
     path = tmp_path / "ledger.db"
     ledger(path)
 
+    assert schema_version(path) == 3
+    with closing(open_database(path)) as db:
+        assert [row["version"] for row in db.execute("SELECT version FROM schema_migrations")] == [
+            1,
+            2,
+            3,
+        ]
+
+
+def test_v1_upgrade_is_atomic_and_preserves_existing_receipts(tmp_path: Path) -> None:
+    path = tmp_path / "ledger.db"
+    original = ledger(path).append(command())
+    # Recreate the former database shape while retaining the actual immutable event bytes.
+    with closing(open_database(path)) as db:
+        db.execute("DROP TABLE command_completions")
+        db.execute("DROP TABLE command_admissions")
+        db.execute("DELETE FROM schema_migrations WHERE version>=2")
+        db.execute("PRAGMA user_version=1")
+        db.commit()
+
+    def fail() -> None:
+        raise RuntimeError("fixture migration crash")
+
+    with pytest.raises(RuntimeError, match="fixture migration crash"):
+        migrate(path, before_commit=fail)
     assert schema_version(path) == 1
     with closing(open_database(path)) as db:
-        assert [row["version"] for row in db.execute("SELECT version FROM schema_migrations")] == [1]
+        assert (
+            db.execute("SELECT 1 FROM sqlite_master WHERE name='command_admissions'").fetchone()
+            is None
+        )
+        assert (
+            bytes(db.execute("SELECT receipt FROM events").fetchone()["receipt"])
+            == original.canonical_bytes()
+        )
+    upgraded = ledger(path)
+    assert schema_version(path) == 3
+    assert upgraded.lookup_idempotency("stable-key") == original
 
 
 def test_event_identity_columns_have_database_unique_constraints(tmp_path: Path) -> None:
@@ -80,7 +115,9 @@ def test_database_denies_event_update_and_delete(tmp_path: Path) -> None:
 
     with closing(open_database(path)) as db:
         with pytest.raises(sqlite3.IntegrityError, match="EVENTS_APPEND_ONLY"):
-            db.execute("UPDATE events SET event_type='changed' WHERE event_id=?", (receipt.event_id,))
+            db.execute(
+                "UPDATE events SET event_type='changed' WHERE event_id=?", (receipt.event_id,)
+            )
         with pytest.raises(sqlite3.IntegrityError, match="EVENTS_APPEND_ONLY"):
             db.execute("DELETE FROM events WHERE event_id=?", (receipt.event_id,))
 
@@ -102,7 +139,14 @@ def test_rebuild_is_pure_deterministic_and_checkpoints_full_replay(tmp_path: Pat
     path = tmp_path / "ledger.db"
     store = ledger(path)
     store.append(command(command_id="command-1", idempotency_key="key-1"))
-    store.append(command(command_id="command-2", idempotency_key="key-2", target_id="work-2", correlation=command().correlation.model_copy(update={"record_id": "work-2"})))
+    store.append(
+        command(
+            command_id="command-2",
+            idempotency_key="key-2",
+            target_id="work-2",
+            correlation=command().correlation.model_copy(update={"record_id": "work-2"}),
+        )
+    )
     projector = Projector(path, store)
     expected = Projector.reduce(tuple(store.iter_events()))
 

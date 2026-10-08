@@ -172,14 +172,64 @@ class WakeupService:
         finally:
             db.close()
 
+    def _revalidate(self, result: WakeResult) -> None:
+        item = None
+        owners = []
+        for row in self._store.events(result.lease.resource):
+            payload = json.loads(row["payload"])
+            if row["event_type"] == "queue_enqueued" and payload["token"] == result.wait_token:
+                item = WaitQueue._from_payload(payload)
+            elif row["event_type"] == "wake_created" and payload["wait_token"] == result.wait_token:
+                owners.append((payload["release_id"], payload["attempt"]["attempt_id"]))
+        if owners != [(result.release_id, result.attempt.attempt_id)]:
+            raise WakeDenied("WAKE_QUEUE_TOKEN_OWNERSHIP_MISMATCH")
+        if item is None or item.holder != result.lease.holder:
+            raise WakeDenied("WAKE_QUEUE_BINDING_MISMATCH")
+        self._validate(item, self._eligibility_loader(item))
+        if (
+            not self._leases.is_authoritative(result.lease)
+            or result.attempt.fencing_epoch != result.lease.fencing_epoch
+            or result.attempt.authority != item.authority
+        ):
+            raise WakeDenied("WAKE_LEASE_NOT_AUTHORITATIVE")
+
+    def _dispatch(self, result: WakeResult) -> None:
+        db = self._store._connect()
+        try:
+            db.execute("BEGIN IMMEDIATE")
+            rows = db.execute(
+                "SELECT * FROM scheduler_events WHERE event_type IN "
+                "('wake_dispatch_started', 'wake_dispatched') ORDER BY sequence"
+            ).fetchall()
+            for row in rows:
+                payload = json.loads(row["payload"])
+                if payload["release_id"] == result.release_id:
+                    raise WakeDenied("WAKE_DISPATCH_OUTCOME_UNCERTAIN")
+            self._revalidate(result)
+            self._store._insert(
+                db,
+                "wake_dispatch_started",
+                result.lease.resource,
+                self._clock(),
+                {"release_id": result.release_id, "attempt_id": result.attempt.attempt_id},
+            )
+            db.commit()
+        except BaseException:
+            db.rollback()
+            raise
+        finally:
+            db.close()
+        # No transaction spans the callback. Its admission survives callback/process failure.
+        self._start_fresh_attempt(result.attempt)
+        self._mark_dispatched(result)
+
     def on_release(self, release_id: str, resource: ResourceUri, *, ttl: int) -> WakeResult:
         existing = self._existing(release_id)
         if existing is not None:
             if existing.lease.resource != str(resource):
                 raise WakeDenied("DUPLICATE_RELEASE_MISMATCH")
             if not self._was_dispatched(release_id):
-                self._start_fresh_attempt(existing.attempt)
-                self._mark_dispatched(existing)
+                self._dispatch(existing)
             return existing
         ordered = self._queue.ordered(resource)
         if not ordered:
@@ -223,9 +273,19 @@ class WakeupService:
         db = self._store._connect()
         try:
             db.execute("BEGIN IMMEDIATE")
-            self._store._insert(
-                db, "queue_woken", str(resource), now, {"token": item.token}
-            )
+            for row in db.execute(
+                "SELECT payload FROM scheduler_events WHERE event_type='wake_created'"
+            ):
+                previous = json.loads(row["payload"])
+                if previous["release_id"] == release_id:
+                    raise WakeDenied("WAKE_CREATION_ALREADY_ADMITTED")
+                if previous["wait_token"] == item.token:
+                    raise WakeDenied("WAKE_QUEUE_TOKEN_ALREADY_CONSUMED")
+            if not any(
+                entry.token == item.token for entry in WaitQueue._active_rows(db, str(resource))
+            ):
+                raise WakeDenied("WAKE_QUEUE_TOKEN_ALREADY_CONSUMED")
+            self._store._insert(db, "queue_woken", str(resource), now, {"token": item.token})
             self._store._insert(db, "wake_created", str(resource), now, payload)
             db.commit()
         except BaseException:
@@ -233,6 +293,5 @@ class WakeupService:
             raise
         finally:
             db.close()
-        self._start_fresh_attempt(attempt)
-        self._mark_dispatched(result)
+        self._dispatch(result)
         return result

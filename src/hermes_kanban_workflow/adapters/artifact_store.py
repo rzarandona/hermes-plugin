@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from enum import StrEnum
 from hashlib import sha256
@@ -75,6 +75,8 @@ class SigningCapability:
 
 @dataclass(frozen=True, slots=True)
 class ArtifactSignature:
+    """Signers must authenticate descriptor_bytes, including every authority claim."""
+
     signed_digest: str
     signature: bytes
     key_id: str
@@ -86,10 +88,9 @@ class ArtifactSignature:
     production_proof: bool
 
     @property
-    def canonical_bytes(self) -> bytes:
+    def descriptor_bytes(self) -> bytes:
         return _frame(
             self.signed_digest.encode(),
-            self.signature,
             self.key_id.encode(),
             self.root_class.value.encode(),
             self.environment.encode(),
@@ -98,6 +99,10 @@ class ArtifactSignature:
             str(self.hardware_backed).encode(),
             str(self.production_proof).encode(),
         )
+
+    @property
+    def canonical_bytes(self) -> bytes:
+        return _frame(self.descriptor_bytes, self.signature)
 
 
 class SigningAdapter(Protocol):
@@ -171,9 +176,9 @@ class EphemeralSigningAdapter:
             capability_id = None
             non_exportable = False
             hardware_backed = False
-        return ArtifactSignature(
+        descriptor = ArtifactSignature(
             signed_digest=digest,
-            signature=key.sign(digest.encode()),
+            signature=b"",
             key_id=key_id,
             root_class=root_class,
             environment=environment,
@@ -182,13 +187,16 @@ class EphemeralSigningAdapter:
             hardware_backed=hardware_backed,
             production_proof=False,
         )
+        return replace(descriptor, signature=key.sign(descriptor.descriptor_bytes))
 
     def verify(self, signature: ArtifactSignature) -> bool:
+        if signature.production_proof:
+            return False
         key = self._public.get(signature.key_id)
         if key is None:
             return False
         try:
-            key.verify(signature.signature, signature.signed_digest.encode())
+            key.verify(signature.signature, signature.descriptor_bytes)
         except InvalidSignature:
             return False
         return True
@@ -209,7 +217,9 @@ class SignedArtifact:
     signature: ArtifactSignature
 
     def recompute_identity(self) -> str:
-        return sha256(_frame(self.material.canonical_bytes, self.signature.canonical_bytes)).hexdigest()
+        return sha256(
+            _frame(self.material.canonical_bytes, self.signature.canonical_bytes)
+        ).hexdigest()
 
     @property
     def build_receipt(self) -> BuildReceipt:

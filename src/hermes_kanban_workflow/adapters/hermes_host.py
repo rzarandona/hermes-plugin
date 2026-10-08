@@ -1,46 +1,50 @@
-"""Thin adapter for the verified generation-1 Hermes PluginContext."""
+"""Native observation adapter; authenticated external enforcement remains separate."""
 
 from __future__ import annotations
 
+import json
 from typing import Any
+
+from ..observe import Observer, runtime_observer
+from ..observe import register as register_observation
 
 
 def register(ctx: Any) -> None:
-    """Pinned generation-1 entry point; registers inert host surfaces only."""
+    """Register the observation surfaces using native callback signatures."""
     HermesPluginContextPort(ctx).register_package_commands()
 
 
 class HermesPluginContextPort:
-    def __init__(self, ctx: Any) -> None:
+    def __init__(self, ctx: Any, *, observer: Observer | None = None) -> None:
         self._ctx = ctx
+        self._observer = observer
 
     def register_package_commands(self) -> None:
-        self._ctx.register_tool(
-            name="kanban_status",
-            toolset="kanban-workflow",
-            schema={"type": "object", "properties": {}, "additionalProperties": False},
-            handler=self.status,
-            description="Read workflow plugin status without durable mutation.",
-        )
+        self._observer = self._observer or runtime_observer()
+        register_observation(self._ctx, self._observer)
         self._ctx.register_command(
             name="kanban_preflight",
             handler=self.preflight,
-            description="Describe the explicit offline preflight inputs.",
+            description="Read live observation compatibility and enforcement prerequisites.",
         )
         self._ctx.register_command(
             name="kanban_request_activation",
             handler=self.request_activation,
-            description="Describe the owner decision required for activation.",
+            description="Describe the authenticated external authority required for enforcement.",
         )
 
-    @staticmethod
-    def status() -> dict[str, str]:
-        return {"mode": "loaded", "enforcement": "disabled"}
+    def preflight(self, raw_args: str = "", **kwargs: object) -> str:
+        if raw_args.strip():
+            return json.dumps({"error": "NO_ARGUMENTS_ACCEPTED"})
+        assert self._observer is not None
+        status = self._observer.status()
+        return json.dumps({
+            "observation_compatible": status["compatible"], "enabled": status["enabled"],
+            "enforcement": "disabled", "code": "AUTHENTICATED_SERVICE_ACTIVATION_REQUIRED",
+        }, sort_keys=True)
 
     @staticmethod
-    def preflight() -> dict[str, str]:
-        return {"status": "requires-explicit-input"}
-
-    @staticmethod
-    def request_activation() -> dict[str, str]:
-        return {"status": "owner-decision-required"}
+    def request_activation(raw_args: str = "", **kwargs: object) -> str:
+        return json.dumps({
+            "enforcement": "disabled", "code": "AUTHENTICATED_SERVICE_ACTIVATION_REQUIRED",
+        }, sort_keys=True)

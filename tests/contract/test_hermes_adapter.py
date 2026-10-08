@@ -187,16 +187,20 @@ class HermesAdapterContractTests(unittest.TestCase):
         from hermes_kanban_workflow.adapters.hermes_host import HermesPluginContextPort
 
         ctx = RecordingContext()
-        HermesPluginContextPort(ctx).register_package_commands()
+        from hermes_kanban_workflow.observe import OBSERVE_SOURCE_COMMIT, Observer
+
+        with TemporaryDirectory() as directory:
+            observer = Observer(Path(directory), Path(directory) / "absent.db", OBSERVE_SOURCE_COMMIT)
+            HermesPluginContextPort(ctx, observer=observer).register_package_commands()
 
         self.assertEqual([name for name, _ in ctx.tools], ["kanban_status"])
         self.assertEqual(ctx.tools[0][1]["toolset"], "kanban-workflow")
         schema = ctx.tools[0][1]["schema"]
         self.assertIsInstance(schema, dict)
-        self.assertEqual(schema["type"], "object")  # type: ignore[index]
+        self.assertEqual(schema["parameters"]["type"], "object")  # type: ignore[index]
         self.assertEqual(
             [name for name, _ in ctx.commands],
-            ["kanban_preflight", "kanban_request_activation"],
+            ["kanban_workflow", "kanban_preflight", "kanban_request_activation"],
         )
 
     def test_manifest_declares_configuration_and_fail_closed_host_contract(self) -> None:

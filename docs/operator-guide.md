@@ -1,5 +1,19 @@
 # Operator Guide
 
+## Observation switch
+
+Rein Hermes Kanban Plugin provides a native read tool and the human-operated
+`/kanban_workflow on|off|status` command. On enables status counts only; Off stops
+board reads immediately. The choice persists in the captured profile's state
+directory across fresh processes and restarts. Missing or malformed state is Off.
+Changing the host source or using a dirty/unsupported host blocks observation.
+This switch never enables workers, Asana writes, enforcement or PROD deployment.
+`/kanban_preflight` reports live observation compatibility and the missing
+enforcement authority; `/kanban_request_activation` continues to deny enforcement.
+
+The independent controller is `python tools/observe_control.py status` with
+explicit profile/host options when operating outside Hermes; see `--help`.
+
 Owner: Operations
 Status: repository rehearsal only; installation and activation unauthorized.
 

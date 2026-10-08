@@ -40,35 +40,50 @@ class EffectReconciler:
         self._fenceable = fenceable
 
     def dispatch(self, operation_id: str) -> EffectRecord:
-        record = self._store.mark_started(operation_id)
+        record = self._store.mark_started(operation_id, attempt_budget=self._budget)
         try:
             receipt = self._dispatch(record)
+            if receipt.operation_id != operation_id:
+                raise ValueError("PROVIDER_RECEIPT_BINDING_MISMATCH")
+            recorded = self._store.append_provider_receipt(receipt, expected=record)
         except TimeoutError:
-            return self._store.require_reconciliation(operation_id, "PROVIDER_TIMEOUT_UNKNOWN")
-        recorded = self._store.append_provider_receipt(receipt)
+            return self._store.require_reconciliation(
+                operation_id, "PROVIDER_TIMEOUT_UNKNOWN", expected=record
+            )
+        except BaseException:
+            self._store.require_reconciliation(
+                operation_id, "PROVIDER_FAILURE_UNKNOWN", expected=record
+            )
+            raise
         return self.reconcile(recorded.operation_id)
 
     def reconcile(self, operation_id: str) -> EffectRecord:
         record = self._store.get(operation_id)
-        if record.state in {EffectState.CONFIRMED, EffectState.CLOSED}:
+        if record.state in {
+            EffectState.CONFIRMED,
+            EffectState.CLOSED,
+            EffectState.MANUAL_ESCALATION,
+        }:
             return record
         if not self._fenceable:
             return self._store.escalate(
                 operation_id,
                 owner=self._owner,
                 blocked_next_action=self._blocked_next_action,
+                expected=record,
             )
         if record.attempts >= self._budget and self._budget >= 0:
             return self._store.escalate(
                 operation_id,
                 owner=self._owner,
                 blocked_next_action=self._blocked_next_action,
+                expected=record,
             )
-        self._store.mark_readback_pending(operation_id)
-        receipt = self._readback(self._store.get(operation_id))
+        snapshot = self._store.mark_readback_pending(operation_id, expected=record)
+        receipt = self._readback(snapshot)
         if receipt.operation_id != operation_id:
             raise ValueError("READBACK_RECEIPT_BINDING_MISMATCH")
-        return self._store.append_readback_receipt(receipt)
+        return self._store.append_readback_receipt(receipt, expected=snapshot)
 
     def retry(self, operation_id: str) -> EffectRecord:
         reconciled = self.reconcile(operation_id)
@@ -78,6 +93,8 @@ class EffectReconciler:
             return reconciled
         if reconciled.state is not EffectState.RECONCILIATION_REQUIRED:
             raise RuntimeError("AUTHORITATIVE_READBACK_REQUIRED_BEFORE_RETRY")
+        if not self._store.retry_authorized(operation_id):
+            return reconciled
         return self.dispatch(operation_id)
 
     def close(self, operation_id: str) -> EffectRecord:

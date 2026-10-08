@@ -22,9 +22,22 @@
 
 ## Overview
 
+Native **observation** supports Hermes Agent 0.21.5 at clean source
+`08165d58931841cee713468ae89032af7c57060a`, with Python 3.11 through 3.13.
+It reads real Kanban status counts and provides a durable, profile-local switch:
+`/kanban_workflow on`, `/kanban_workflow off`, or `/kanban_workflow status`.
+The default is off. Observation does not execute tasks, write to Asana, or deploy.
+
 This standalone package targets Hermes Agent 0.20.5 and Hermes Desktop 0.17.0
 at source `a251e87d826f4ef7c75a8927d5304e24cf43ef54`. It uses manifest version
-2 and API generation 1, and supports Python 3.11 through 3.13.
+2 and API generation 1, and supports Python 3.11 through 3.13. These are the
+historical **enforcement** contract values, not observation prerequisites.
+
+Full enforcement remains blocked on the authenticated external writer,
+production signer/provider authority and external Windows qualification.
+Local code fixes and passing fixture tests do not supply that authority.
+See [the audit remediation notes](docs/audit-remediation.md) for the repaired
+boundaries, verification scope and remaining prerequisites.
 
 **Release state:** development package built for inspection only. Installation, profile modification, registration, migration, secret provisioning, activation, production access, deployment, and retirement are unauthorized.
 
@@ -92,6 +105,11 @@ uv build --wheel --out-dir dist
 ```
 
 The second command creates a deterministic unified plugin archive and regenerates `release/package-inventory.json` and `release/checksums.txt`. Inspect the wheel or archive directly; do not install it into Hermes or any profile.
+
+Build these outputs before running the inventory verification below. Source text
+uses canonical LF checksums and archive bytes; binary assets retain exact bytes.
+The repeat runner executes a fresh process for each ordered fixture run and labels
+its results accordingly. These runs do not prove real worker interleavings.
 
 ## Verification
 

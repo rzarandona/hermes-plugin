@@ -74,7 +74,7 @@ def test_caller_constructed_readback_cannot_confirm_or_close_effect(tmp_path: Pa
     with EffectStore(tmp_path / "effects.db") as store:
         _intent(store, "forged-readback")
         store.mark_started("forged-readback")
-        store.mark_readback_pending("forged-readback")
+        pending = store.mark_readback_pending("forged-readback")
         forged = ReadbackReceipt(
             "caller-receipt",
             "forged-readback",
@@ -84,7 +84,7 @@ def test_caller_constructed_readback_cannot_confirm_or_close_effect(tmp_path: Pa
         )
 
         with pytest.raises(PermissionError, match="AUTHORITATIVE_READBACK_VERIFICATION_REQUIRED"):
-            store.append_readback_receipt(forged)
+            store.append_readback_receipt(forged, expected=pending)
 
         assert store.get("forged-readback").state is EffectState.READBACK_PENDING
 
@@ -224,7 +224,7 @@ def test_successful_effect_records_receipt_before_readback_and_closure(tmp_path:
 def test_duplicate_provider_receipt_is_one_immutable_evidence_row(tmp_path: Path) -> None:
     with EffectStore(tmp_path / "effects.db") as store:
         _intent(store, "duplicate-receipt")
-        store.mark_started("duplicate-receipt")
+        started = store.mark_started("duplicate-receipt")
         receipt = ProviderReceipt(
             "provider-duplicate",
             "duplicate-receipt",
@@ -232,8 +232,8 @@ def test_duplicate_provider_receipt_is_one_immutable_evidence_row(tmp_path: Path
             "accepted",
             "fixture:provider:duplicate",
         )
-        first = store.append_provider_receipt(receipt)
-        second = store.append_provider_receipt(receipt)
+        first = store.append_provider_receipt(receipt, expected=started)
+        second = store.append_provider_receipt(receipt, expected=started)
 
         assert first == second
         assert store.provider_receipt_count("duplicate-receipt") == 1
@@ -246,7 +246,7 @@ def test_contradictory_readback_requires_reconciliation(tmp_path: Path) -> None:
     ) as store:
         _intent(store, "contradictory")
         store.mark_started("contradictory")
-        store.mark_readback_pending("contradictory")
+        pending = store.mark_readback_pending("contradictory")
         result = store.append_readback_receipt(
             ReadbackReceipt(
                 "contradictory-readback",
@@ -254,7 +254,8 @@ def test_contradictory_readback_requires_reconciliation(tmp_path: Path) -> None:
                 "contradictory",
                 "fixture-authority",
                 "fixture:contradictory",
-            )
+            ),
+            expected=pending,
         )
 
     assert result.state is EffectState.RECONCILIATION_REQUIRED
@@ -299,13 +300,9 @@ def test_expired_reconciliation_budget_escalates_without_dispatch(tmp_path: Path
 def test_manual_escalation_rejects_missing_owner_or_blocked_action(tmp_path: Path) -> None:
     with EffectStore(tmp_path / "effects.db") as store:
         _intent(store)
-        with pytest.raises(
-            ValueError, match="MANUAL_ESCALATION_OWNER_AND_BLOCKED_ACTION_REQUIRED"
-        ):
+        with pytest.raises(ValueError, match="MANUAL_ESCALATION_OWNER_AND_BLOCKED_ACTION_REQUIRED"):
             store.escalate("operation-fixture", owner="", blocked_next_action="retry")
-        with pytest.raises(
-            ValueError, match="MANUAL_ESCALATION_OWNER_AND_BLOCKED_ACTION_REQUIRED"
-        ):
+        with pytest.raises(ValueError, match="MANUAL_ESCALATION_OWNER_AND_BLOCKED_ACTION_REQUIRED"):
             store.escalate("operation-fixture", owner="owner", blocked_next_action="")
 
 
@@ -375,16 +372,31 @@ def test_traceability_covers_every_frozen_normative_source_line() -> None:
         Path("tests/fixtures/normative_traceability.json").read_text(encoding="utf-8")
     )
     expected_counts = {
-        1: 10, 2: 20, 3: 42, 4: 27, 5: 14, 6: 17, 7: 21,
-        8: 6, 9: 30, 10: 16, 11: 19, 12: 9, 13: 8, 14: 3,
-        15: 3, 16: 2, 17: 21, 18: 26, 19: 12, 20: 8, 21: 1,
+        1: 10,
+        2: 20,
+        3: 42,
+        4: 27,
+        5: 14,
+        6: 17,
+        7: 21,
+        8: 6,
+        9: 30,
+        10: 16,
+        11: 19,
+        12: 9,
+        13: 8,
+        14: 3,
+        15: 3,
+        16: 2,
+        17: 21,
+        18: 26,
+        19: 12,
+        20: 8,
+        21: 1,
     }
     rules = traceability["rules"]
     actual_counts = {
-        section: sum(
-            rule["id"].startswith(f"SECTION-{section:02d}-RULE-")
-            for rule in rules
-        )
+        section: sum(rule["id"].startswith(f"SECTION-{section:02d}-RULE-") for rule in rules)
         for section in expected_counts
     }
 
@@ -431,8 +443,7 @@ def test_seeded_failure_schedules_are_deterministic_and_cover_all_classes() -> N
         "replay",
     }
     assert all(
-        set(run["schedule"]) == required
-        and all(item["observed"] for item in run["observations"])
+        set(run["schedule"]) == required and all(item["observed"] for item in run["observations"])
         for run in report["results"][0]["schedule_executions"]
     )
 
@@ -445,7 +456,8 @@ def test_bypass_probes_cover_all_required_boundaries() -> None:
         text=True,
     )
     probes = {
-        result["bypass_probe"] for result in json.loads(completed.stdout)["results"]
+        result["bypass_probe"]
+        for result in json.loads(completed.stdout)["results"]
         if result["bypass_probe"] is not None
     }
 
@@ -486,10 +498,10 @@ def test_execute_runs_mapped_implementation_and_real_fault_tests(
         "tests/failure_injection/test_holds_failover.py::test_active_passive_failover_has_one_winner_after_authoritative_reconciliation",
         "tests/failure_injection/test_resource_scheduler.py::test_lost_release_replay_repairs_acquired_wait_token",
     }
-    assert len(commands) == 2
+    assert len(commands) == 4
     assert all("-m" in command and "pytest" in command for command in commands)
     assert groups[0]["implementation_test"] in commands[0]
-    assert groups[1]["implementation_test"] in commands[1]
+    assert groups[1]["implementation_test"] in commands[2]
     assert all(fault_selectors <= set(command) for command in commands)
     assert report["unclassified_failures"] == 0
     assert all(
@@ -499,8 +511,7 @@ def test_execute_runs_mapped_implementation_and_real_fault_tests(
         for observation in schedule["observations"]
     )
     assert all(
-        case["observed"]["selector_returncode"] == 0
-        and case["observed"]["all_injections_observed"]
+        case["observed"]["selector_returncode"] == 0 and case["observed"]["all_injections_observed"]
         for result in report["results"]
         for case in result["cases"]
     )

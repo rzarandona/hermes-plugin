@@ -31,10 +31,66 @@ class Ledger:
     def __init__(self, path: Path, writer_identity: str) -> None:
         self._path = path
         self.writer_identity = writer_identity
+        self._active_completions: dict[str, tuple[str, object]] = {}
         migrate(path)
 
     def _connect(self) -> sqlite3.Connection:
         return open_database(self._path)
+
+    def execute_once(
+        self, command: CommandEnvelope, callback: Callable[[], None]
+    ) -> CommandReceipt:
+        """Reserve identity durably before callbacks; crashes require manual reconciliation."""
+        with closing(self._connect()) as db:
+            db.execute("BEGIN IMMEDIATE")
+            try:
+                row = db.execute(
+                    "SELECT * FROM events WHERE idempotency_key=?", (command.idempotency_key,)
+                ).fetchone()
+                if row is not None:
+                    self._check_completion(db, command)
+                    receipt = self._validate_replay(row, command)
+                    db.commit()
+                    return receipt
+                admission = db.execute(
+                    "SELECT * FROM command_admissions WHERE idempotency_key=?",
+                    (command.idempotency_key,),
+                ).fetchone()
+                if admission is not None:
+                    if admission["payload_digest"] != command.payload_digest:
+                        raise IdempotencyIntegrityError("IDEMPOTENCY_PAYLOAD_MISMATCH")
+                    if admission["command_digest"] != command.digest:
+                        raise IdempotencyIntegrityError("IDEMPOTENCY_COMMAND_MISMATCH")
+                    raise RuntimeError("COMMAND_OUTCOME_UNCERTAIN_RECONCILIATION_REQUIRED")
+                if (
+                    db.execute(
+                        "SELECT 1 FROM events WHERE command_id=? UNION ALL "
+                        "SELECT 1 FROM command_admissions WHERE command_id=?",
+                        (command.command_id, command.command_id),
+                    ).fetchone()
+                    is not None
+                ):
+                    raise IdempotencyIntegrityError("COMMAND_ID_REUSE_MISMATCH")
+                db.execute(
+                    "INSERT INTO command_admissions VALUES(?,?,?,?, 'uncertain')",
+                    (
+                        command.command_id,
+                        command.idempotency_key,
+                        command.digest,
+                        command.payload_digest,
+                    ),
+                )
+                db.commit()
+            except BaseException:
+                db.rollback()
+                raise
+        completion = object()
+        try:
+            callback()
+            self._active_completions[command.idempotency_key] = (command.digest, completion)
+            return self._append(command, completion=completion)
+        finally:
+            self._active_completions.pop(command.idempotency_key, None)
 
     def append(
         self,
@@ -42,13 +98,56 @@ class Ledger:
         *,
         before_commit: Callable[[], None] | None = None,
     ) -> CommandReceipt:
+        return self._append(command, before_commit=before_commit)
+
+    @staticmethod
+    def _check_completion(db: sqlite3.Connection, command: CommandEnvelope) -> None:
+        admissions = db.execute(
+            "SELECT * FROM command_admissions WHERE idempotency_key=? OR command_id=?",
+            (command.idempotency_key, command.command_id),
+        ).fetchall()
+        for admission in admissions:
+            completed = db.execute(
+                "SELECT 1 FROM command_completions WHERE idempotency_key=? AND command_id=? "
+                "AND command_digest=?",
+                (
+                    admission["idempotency_key"],
+                    admission["command_id"],
+                    admission["command_digest"],
+                ),
+            ).fetchone()
+            if completed is None:
+                raise RuntimeError("COMMAND_OUTCOME_UNCERTAIN_RECONCILIATION_REQUIRED")
+
+    def _append(
+        self,
+        command: CommandEnvelope,
+        *,
+        before_commit: Callable[[], None] | None = None,
+        completion: object | None = None,
+    ) -> CommandReceipt:
         db = self._connect()
         try:
             db.execute("BEGIN IMMEDIATE")
+            completing = completion is not None
+            if completing:
+                active = self._active_completions.get(command.idempotency_key)
+                if active is None or active != (command.digest, completion):
+                    raise PermissionError("GUARDED_COMPLETION_AUTHORITY_REQUIRED")
+                admission = db.execute(
+                    "SELECT 1 FROM command_admissions WHERE idempotency_key=? AND command_id=? "
+                    "AND command_digest=?",
+                    (command.idempotency_key, command.command_id, command.digest),
+                ).fetchone()
+                if admission is None:
+                    raise PermissionError("GUARDED_COMPLETION_BINDING_MISMATCH")
+            else:
+                self._check_completion(db, command)
             replay = db.execute(
                 "SELECT * FROM events WHERE idempotency_key=?", (command.idempotency_key,)
             ).fetchone()
             if replay is not None:
+                self._check_completion(db, command)
                 receipt = self._validate_replay(replay, command)
                 db.commit()
                 return receipt
@@ -92,6 +191,11 @@ class Ledger:
                     receipt_bytes,
                 ),
             )
+            if completing:
+                db.execute(
+                    "INSERT INTO command_completions VALUES(?,?,?,?)",
+                    (command.idempotency_key, command.command_id, command.digest, event.event_id),
+                )
             if before_commit is not None:
                 before_commit()
             db.commit()
@@ -104,6 +208,15 @@ class Ledger:
 
     def lookup_idempotency(self, key: str) -> CommandReceipt | None:
         with closing(self._connect()) as db:
+            incomplete = db.execute(
+                "SELECT 1 FROM command_admissions a LEFT JOIN command_completions c "
+                "ON c.idempotency_key=a.idempotency_key AND c.command_id=a.command_id "
+                "AND c.command_digest=a.command_digest "
+                "WHERE a.idempotency_key=? AND c.idempotency_key IS NULL",
+                (key,),
+            ).fetchone()
+            if incomplete is not None:
+                raise RuntimeError("COMMAND_OUTCOME_UNCERTAIN_RECONCILIATION_REQUIRED")
             row = db.execute(
                 "SELECT receipt FROM events WHERE idempotency_key=?", (key,)
             ).fetchone()

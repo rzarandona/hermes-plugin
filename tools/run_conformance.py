@@ -179,32 +179,34 @@ def execute(groups: list[dict[str, Any]], repeat: int, *, external_roots: Sequen
         raw_schedules = [
             _schedule(int(group["group"]), iteration) for iteration in range(repeat)
         ]
-        injection_selectors = [
-            INJECTION_SELECTORS[injection]
-            for schedule in raw_schedules
-            for injection in schedule
-        ]
-        completed = subprocess.run(
-            [sys.executable, "-m", "pytest", *selectors, *injection_selectors, "-q", "-W", "error", "-p", "no:cacheprovider"],
-            cwd=ROOT,
-            capture_output=True,
-            text=True,
-            check=False,
-            env={**__import__("os").environ, "PYTHONDONTWRITEBYTECODE": "1"},
-        )
-        schedules = [
-            {
+        schedules = []
+        returncodes = []
+        errors = []
+        for iteration, schedule in enumerate(raw_schedules):
+            # Each fixture order executes in its own process. These are ordered
+            # repository fault tests, not real worker interleavings.
+            injection_selectors = [INJECTION_SELECTORS[injection] for injection in schedule]
+            completed = subprocess.run(
+                [sys.executable, "-m", "pytest", *selectors, *injection_selectors,
+                 "-q", "-W", "error", "-p", "no:cacheprovider"],
+                cwd=ROOT, capture_output=True, text=True, check=False,
+                env={**__import__("os").environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            )
+            returncodes.append(completed.returncode)
+            if completed.returncode:
+                errors.append((completed.stdout + completed.stderr)[-2000:])
+            schedules.append({
                 "seed": hashlib.sha256(f"wp14:{group['group']}:{iteration}".encode()).hexdigest()[:16],
                 "schedule": schedule,
+                "execution_kind": "isolated-ordered-fixture-tests",
+                "returncode": completed.returncode,
                 "observations": [
                     {"injection": injection, "selector": INJECTION_SELECTORS[injection], "observed": completed.returncode == 0}
                     for injection in schedule
                 ],
                 "passed": completed.returncode == 0,
-            }
-            for iteration, schedule in enumerate(raw_schedules)
-        ]
-        passed = completed.returncode == 0
+            })
+        passed = all(code == 0 for code in returncodes)
         if not passed:
             unclassified += 1
         results.append({
@@ -216,7 +218,7 @@ def execute(groups: list[dict[str, Any]], repeat: int, *, external_roots: Sequen
                 "expected_outcome": case["outcome"],
                 "observed": {
                     "selector": case.get("implementation_test", group["implementation_test"]),
-                    "selector_returncode": completed.returncode,
+                    "selector_returncode": next((code for code in returncodes if code), 0),
                     "schedule_runs": len(schedules),
                     "all_injections_observed": all(run["passed"] for run in schedules),
                 },
@@ -224,7 +226,7 @@ def execute(groups: list[dict[str, Any]], repeat: int, *, external_roots: Sequen
             "schedule_executions": schedules,
             "bypass_probe": BYPASS_PROBES.get(int(group["group"])),
             "evidence_receipt": {"source": group["source"], "implementation_test": group["implementation_test"], "immutable": True, "effect_executed": False, "production_proof": False},
-            "stderr": completed.stderr[-2000:] if completed.returncode else "",
+            "stderr": "\n".join(errors)[-2000:],
         })
     after = _snapshot_roots(external_roots)
     return {
@@ -232,6 +234,9 @@ def execute(groups: list[dict[str, Any]], repeat: int, *, external_roots: Sequen
         "delivery_semantics": "at-least-once stable-ID delivery plus provider dedupe",
         "group_count": len(results),
         "repeat": repeat,
+        "execution_kind": "isolated-ordered-fixture-tests",
+        "independent_process_runs": len(groups) * repeat,
+        "worker_interleavings_proven": False,
         "results": results,
         "unclassified_failures": unclassified,
         "external_state_boundary": "declared-fixture-roots" if external_roots else "explicit-empty-sandbox-boundary",

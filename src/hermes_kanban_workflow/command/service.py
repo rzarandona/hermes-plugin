@@ -58,11 +58,14 @@ class GuardedCommandService:
         effect: Callable[[CommandEnvelope], None] | None = None,
     ) -> CommandReceipt:
         validated = self._validator.validate(command, principal, self._snapshot_loader())
-        if effect is not None:
-            self._validator.recheck_before_effect(
-                validated,
-                principal,
-                self._snapshot_loader,
-                effect,
-            )
-        return self._ledger.append(command)
+
+        def perform() -> None:
+            if effect is not None:
+                self._validator.recheck_before_effect(
+                    validated,
+                    principal,
+                    self._snapshot_loader,
+                    effect,
+                )
+
+        return self._ledger.execute_once(command, perform)

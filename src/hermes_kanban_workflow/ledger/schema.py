@@ -5,7 +5,28 @@ from collections.abc import Callable
 from contextlib import closing
 from pathlib import Path
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 3
+
+_SCHEMA_V3 = (
+    """CREATE TABLE command_completions (
+        idempotency_key TEXT PRIMARY KEY,
+        command_id TEXT NOT NULL UNIQUE,
+        command_digest TEXT NOT NULL,
+        event_id TEXT NOT NULL UNIQUE REFERENCES events(event_id)
+    )""",
+    """CREATE TRIGGER command_completions_deny_update BEFORE UPDATE ON command_completions
+        BEGIN SELECT RAISE(ABORT, 'COMMAND_COMPLETIONS_APPEND_ONLY'); END""",
+    """CREATE TRIGGER command_completions_deny_delete BEFORE DELETE ON command_completions
+        BEGIN SELECT RAISE(ABORT, 'COMMAND_COMPLETIONS_APPEND_ONLY'); END""",
+)
+
+_SCHEMA_V2 = """CREATE TABLE command_admissions (
+    command_id TEXT NOT NULL UNIQUE,
+    idempotency_key TEXT PRIMARY KEY,
+    command_digest TEXT NOT NULL,
+    payload_digest TEXT NOT NULL,
+    state TEXT NOT NULL CHECK(state = 'uncertain')
+)"""
 
 _SCHEMA_V1 = (
     "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)",
@@ -76,6 +97,21 @@ def migrate(path: Path, *, before_commit: Callable[[], None] | None = None) -> N
                 db.execute(
                     "INSERT INTO schema_migrations(version, applied_at) "
                     "VALUES(1, strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+                )
+                version = 1
+            if version == 1:
+                db.execute(_SCHEMA_V2)
+                db.execute(
+                    "INSERT INTO schema_migrations(version, applied_at) "
+                    "VALUES(2, strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
+                )
+                version = 2
+            if version == 2:
+                for statement in _SCHEMA_V3:
+                    db.execute(statement)
+                db.execute(
+                    "INSERT INTO schema_migrations(version, applied_at) "
+                    "VALUES(3, strftime('%Y-%m-%dT%H:%M:%fZ','now'))"
                 )
                 db.execute(f"PRAGMA user_version={SCHEMA_VERSION}")
             if before_commit is not None:

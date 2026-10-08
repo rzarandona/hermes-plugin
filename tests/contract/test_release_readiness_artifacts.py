@@ -164,4 +164,7 @@ def test_release_inventory_enumerates_all_required_classes_and_checksums_reprodu
     ).hexdigest()
     for entry in entries:
         path = Path(entry["path"])
-        assert checksum_rows[entry["path"]] == sha256(path.read_bytes()).hexdigest()
+        data = path.read_bytes()
+        if path.suffix.lower() in {".py", ".md", ".json", ".yaml", ".yml", ".txt", ".js", ".toml"}:
+            data = data.replace(b"\r\n", b"\n")
+        assert checksum_rows[entry["path"]] == sha256(data).hexdigest()

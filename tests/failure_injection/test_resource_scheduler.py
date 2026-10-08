@@ -54,9 +54,7 @@ def _holder(subject: str, *, work_item: str = "work-1") -> HolderBinding:
 
 def test_lease_is_exclusive_and_survives_service_restart(tmp_path: Path) -> None:
     db = tmp_path / "scheduler.db"
-    resource = ResourceUri.parse(
-        "resource://product-a/build-lane/github/us-east-1/windows-x64"
-    )
+    resource = ResourceUri.parse("resource://product-a/build-lane/github/us-east-1/windows-x64")
     first = LeaseService(SchedulerStore(db), lambda: 100).acquire(
         resource, _holder("worker-a"), ttl=20, renewable_conditions=("policy-current",)
     )
@@ -127,9 +125,7 @@ def test_stale_worker_cannot_release_renewed_fence(tmp_path: Path) -> None:
     resource = ResourceUri.parse("resource://product-a/workspace/local/global/stale")
     service = LeaseService(SchedulerStore(tmp_path / "scheduler.db"), lambda: 1)
     first = service.acquire(resource, _holder("worker-a"), ttl=10, renewable_conditions=())
-    renewed = service.renew(
-        first.lease_id, _holder("worker-a"), ttl=10, satisfied=set()
-    )
+    renewed = service.renew(first.lease_id, _holder("worker-a"), ttl=10, satisfied=set())
 
     with pytest.raises(LeaseDenied, match="STALE_FENCING_EPOCH"):
         service.release(first.lease_id, first.holder, first.fencing_epoch)
@@ -142,12 +138,8 @@ def test_fencing_epoch_is_monotonic_per_global_resource(tmp_path: Path) -> None:
     service = LeaseService(store, lambda: 1)
     first_resource = ResourceUri.parse("resource://shared/database/postgres/global/a")
     second_resource = ResourceUri.parse("resource://shared/database/postgres/global/b")
-    first = service.acquire(
-        first_resource, _holder("worker-a"), ttl=10, renewable_conditions=()
-    )
-    other = service.acquire(
-        second_resource, _holder("worker-b"), ttl=10, renewable_conditions=()
-    )
+    first = service.acquire(first_resource, _holder("worker-a"), ttl=10, renewable_conditions=())
+    other = service.acquire(second_resource, _holder("worker-b"), ttl=10, renewable_conditions=())
     service.renew(other.lease_id, other.holder, ttl=10, satisfied=set())
 
     renewed = service.renew(first.lease_id, first.holder, ttl=10, satisfied=set())
@@ -276,9 +268,7 @@ def test_non_cancellable_preemption_queues_without_interrupt(tmp_path: Path) -> 
     resource = ResourceUri.parse("resource://shared/release-lane/github/global/production")
     store = SchedulerStore(tmp_path / "scheduler.db")
     leases = LeaseService(store, lambda: 5)
-    active = leases.acquire(
-        resource, _holder("release-worker"), ttl=20, renewable_conditions=()
-    )
+    active = leases.acquire(resource, _holder("release-worker"), ttl=20, renewable_conditions=())
     queue = WaitQueue(store, lambda: 5, PrecedenceModel.default())
 
     decision = queue.request_preemption(
@@ -399,7 +389,7 @@ def test_duplicate_wake_dedupes_exact_release_but_denies_rebinding(tmp_path: Pat
         service.on_release("release-duplicate", second_resource, ttl=10)
 
 
-def test_dispatch_failure_retries_same_fresh_attempt_once(tmp_path: Path) -> None:
+def test_dispatch_failure_blocks_uncertain_fresh_attempt_replay(tmp_path: Path) -> None:
     resource = ResourceUri.parse("resource://shared/build-lane/github/global/dispatch-repair")
     store = SchedulerStore(tmp_path / "scheduler.db")
     queue = WaitQueue(store, lambda: 10, PrecedenceModel.default())
@@ -435,12 +425,10 @@ def test_dispatch_failure_retries_same_fresh_attempt_once(tmp_path: Path) -> Non
         repaired_attempts.append,
         lambda: 11,
     )
-    repaired = restarted.on_release("release-dispatch-repair", resource, ttl=10)
-    replayed = restarted.on_release("release-dispatch-repair", resource, ttl=10)
-
-    assert repaired == replayed
-    assert repaired.attempt == failed_attempts[0]
-    assert repaired_attempts == [repaired.attempt]
+    with pytest.raises(WakeDenied, match="WAKE_DISPATCH_OUTCOME_UNCERTAIN"):
+        restarted.on_release("release-dispatch-repair", resource, ttl=10)
+    assert len(failed_attempts) == 1
+    assert repaired_attempts == []
 
 
 @pytest.mark.parametrize(
@@ -559,6 +547,4 @@ def test_randomized_queue_schedules_preserve_priority_fifo(tmp_path: Path, seed:
 
     expected = sorted(inserted, key=lambda item: (int(item.priority), item.ordinal))
 
-    assert [item.token for item in queue.ordered(resource)] == [
-        item.token for item in expected
-    ]
+    assert [item.token for item in queue.ordered(resource)] == [item.token for item in expected]

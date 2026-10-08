@@ -13,8 +13,15 @@ PLUGIN = "hermes-kanban-workflow"
 FIXED_TIME = (2026, 8, 29, 0, 0, 0)
 
 
+def canonical_content(path: Path) -> bytes:
+    data = path.read_bytes()
+    if path.suffix.lower() in {".py", ".md", ".json", ".yaml", ".yml", ".txt", ".js", ".toml"}:
+        return data.replace(b"\r\n", b"\n")
+    return data
+
+
 def digest(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    return hashlib.sha256(canonical_content(path)).hexdigest()
 
 
 def source_files() -> list[Path]:
@@ -27,6 +34,7 @@ def source_files() -> list[Path]:
         ROOT / "dashboard/manifest.json",
         ROOT / "dashboard/plugin_api.py",
         ROOT / "skills/hermes-kanban-workflow/SKILL.md",
+        ROOT / "tools/observe_control.py",
         ROOT / "release/evidence-locators.json",
         ROOT / "release/audit-verdict.json",
         ROOT / "release/owner-brief.md",
@@ -35,7 +43,11 @@ def source_files() -> list[Path]:
         ROOT / "docs/conformance-matrix.md",
     ]
     trees = [ROOT / "src/hermes_kanban_workflow", ROOT / "policies", ROOT / "docs", ROOT / "vendor"]
-    values = [path for path in exact if path.exists()]
+    missing = [path for path in exact if not path.is_file()]
+    missing.extend(tree for tree in trees if not tree.is_dir())
+    if missing:
+        raise FileNotFoundError("PACKAGE_INPUT_MISSING: " + str(missing[0]))
+    values = list(exact)
     for tree in trees:
         values.extend(
             path
@@ -53,13 +65,14 @@ def archive_name(path: Path) -> str:
 
 
 def write_bundle(output: Path) -> None:
+    inputs = source_files()
     output.parent.mkdir(parents=True, exist_ok=True)
     with ZipFile(output, "w", compression=ZIP_DEFLATED, compresslevel=9) as archive:
-        for path in source_files():
+        for path in inputs:
             info = ZipInfo(PurePosixPath(archive_name(path)).as_posix(), FIXED_TIME)
             info.compress_type = ZIP_DEFLATED
             info.external_attr = 0o100644 << 16
-            archive.writestr(info, path.read_bytes())
+            archive.writestr(info, canonical_content(path))
 
 
 def category(relative: str) -> str:
@@ -86,6 +99,8 @@ def category(relative: str) -> str:
 
 def write_indexes(bundle: Path) -> None:
     wheel_paths = sorted((ROOT / "dist").glob("*.whl"))
+    if not wheel_paths:
+        raise FileNotFoundError("WHEEL_REQUIRED_BEFORE_RELEASE_INDEX_BUILD")
     entries: list[dict[str, object]] = []
     for path in source_files() + wheel_paths + [bundle]:
         relative = path.relative_to(ROOT).as_posix()
@@ -94,7 +109,7 @@ def write_indexes(bundle: Path) -> None:
                 "path": relative,
                 "category": "plugin-bundle" if path == bundle else category(relative),
                 "sha256": digest(path),
-                "bytes": path.stat().st_size,
+                "bytes": len(canonical_content(path)),
             }
         )
     entries.sort(key=lambda item: str(item["path"]))
@@ -107,10 +122,13 @@ def write_indexes(bundle: Path) -> None:
         "reproducible_timestamp": "2026-08-29T00:00:00Z",
         "installation_authorized": False,
         "activation_authorized": False,
+        "checksum_encoding": "LF-normalized text; exact binary bytes",
         "entries": entries,
     }
     inventory_path = ROOT / "release/package-inventory.json"
-    inventory_path.write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    inventory_path.write_text(
+        json.dumps(inventory, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n"
+    )
     checks = [
         "# owner: Build",
         "# format: sha256<two spaces>repository-relative-path",
@@ -119,7 +137,7 @@ def write_indexes(bundle: Path) -> None:
     ]
     header, format_line, *rows = checks
     (ROOT / "release/checksums.txt").write_text(
-        "\n".join([header, format_line, *sorted(rows)]) + "\n", encoding="utf-8"
+        "\n".join([header, format_line, *sorted(rows)]) + "\n", encoding="utf-8", newline="\n"
     )
 
 
@@ -147,6 +165,8 @@ def main() -> int:
     )
     if not allowed:
         parser.error("OUTPUT_MUST_BE_REPO_DIST_OR_EXPLICIT_TEMP_VERIFICATION_ROOT")
+    if _within(output, dist_root) and not list((ROOT / "dist").glob("*.whl")):
+        parser.error("WHEEL_REQUIRED_BEFORE_RELEASE_INDEX_BUILD")
     write_bundle(output)
     if _within(output, dist_root):
         write_indexes(output)

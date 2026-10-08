@@ -140,11 +140,15 @@ def register_observe_only(
         name="kanban_status",
         toolset="kanban-workflow",
         schema={
-            "type": "object",
-            "properties": {},
-            "additionalProperties": False,
+            "name": "kanban_status",
+            "description": "Read the standalone workflow plugin status.",
+            "parameters": {
+                "type": "object", "properties": {}, "additionalProperties": False,
+            },
         },
-        handler=lambda: {"mode": "observe-only"},
+        handler=lambda args=None, **kwargs: json.dumps(
+            {"error": "NO_ARGUMENTS_ACCEPTED"} if args else {"mode": "observe-only"}
+        ),
         description="Read the standalone workflow plugin status.",
     )
     return ObservationHandle(mode="observe-only", package_digest=package.digest)
